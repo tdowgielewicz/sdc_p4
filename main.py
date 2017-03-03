@@ -84,7 +84,7 @@ def flat_perspective(img):
 
 
 S_threshold = (80, 255)
-H_threshold = (1, 120)
+H_threshold = (15, 100)
 
 def s_treshording(img):
 
@@ -117,6 +117,29 @@ def s_treshording(img):
 
     return binary
 
+def hls_magnitude(img):
+
+    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+
+    H = hls[:, :, 0]
+    L = hls[:, :, 1]
+    S = hls[:, :, 2]
+
+
+    L = L*1
+
+    S = S*3
+
+
+    hls[:, :, 1] = L
+    hls[:, :, 2] = S
+    H = H * 0.5
+    hls[:, :, 0] = H
+
+    return hls
+
+
+
 def h_treshording(img):
 
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
@@ -138,7 +161,8 @@ def h_treshording(img):
 
 def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     # Grayscale
-    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    #gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    gray = img
     # Calculate the x and y gradients
     sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
     sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
@@ -151,7 +175,23 @@ def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/2)):
     # Return the binary image
     return binary_output
 
+def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
+    # Convert to grayscale
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    # Take both Sobel x and y gradients
+    sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
+    sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
+    # Calculate the gradient magnitude
+    gradmag = np.sqrt(sobelx**2 + sobely**2)
+    # Rescale to 8 bit
+    scale_factor = np.max(gradmag)/255
+    gradmag = (gradmag/scale_factor).astype(np.uint8)
+    # Create a binary image of ones where threshold is met, zeros otherwise
+    binary_output = np.zeros_like(gradmag)
+    binary_output[(gradmag >= mag_thresh[0]) & (gradmag <= mag_thresh[1])] = 255
 
+    # Return the binary image
+    return binary_output
 
 #report flatening images
 if REPORT:
@@ -177,14 +217,143 @@ if REPORT:
     #     cv2.imwrite(new_path, out)
 
 
-def image_preprocesor(img):
-    #1 Fix camera disortion
-    img = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-    #out = s_treshording(img)
-    out = dir_threshold(img, sobel_kernel=5, thresh=(0.7, 1.3))
-    kernel = np.ones((2, 3), np.uint8)
-    out = cv2.erode(out, kernel, iterations=1)
 
+def remove_blobs(img,min_area,max_area):
+    pass
+
+
+
+#######FIND LINES FUNCTIONMS
+
+
+
+def window_mask(width, height, img_ref, center, level):
+    output = np.zeros_like(img_ref)
+    output[int(img_ref.shape[0] - (level + 1) * height):int(img_ref.shape[0] - level * height),
+    max(0, int(center - width / 2)):min(int(center + width / 2), img_ref.shape[1])] = 1
+    return output
+
+
+def find_window_centroids(image, window_width, window_height, margin):
+    warped = image
+
+    window_centroids = []  # Store the (left,right) window centroid positions per level
+    window = np.ones(window_width)  # Create our window template that we will use for convolutions
+
+    # First find the two starting positions for the left and right lane by using np.sum to get the vertical image slice
+    # and then np.convolve the vertical image slice with the window template
+
+    # Sum quarter bottom of image to get slice, could use a different ratio
+    l_sum = np.sum(warped[int(3 * warped.shape[0] / 4):, :int(warped.shape[1] / 2)], axis=0)
+    l_center = np.argmax(np.convolve(window, l_sum)) - window_width / 2
+    r_sum = np.sum(warped[int(3 * warped.shape[0] / 4):, int(warped.shape[1] / 2):], axis=0)
+    r_center = np.argmax(np.convolve(window, r_sum)) - window_width / 2 + int(warped.shape[1] / 2)
+
+    # Add what we found for the first layer
+    window_centroids.append((l_center, r_center))
+
+    # Go through each layer looking for max pixel locations
+    for level in range(1, (int)(warped.shape[0] / window_height)):
+        # convolve the window into the vertical slice of the image
+        image_layer = np.sum(
+            warped[int(warped.shape[0] - (level + 1) * window_height):int(warped.shape[0] - level * window_height), :],
+            axis=0)
+        conv_signal = np.convolve(window, image_layer)
+        # Find the best left centroid by using past left center as a reference
+        # Use window_width/2 as offset because convolution signal reference is at right side of window, not center of window
+        offset = window_width / 2
+        l_min_index = int(max(l_center + offset - margin, 0))
+        l_max_index = int(min(l_center + offset + margin, warped.shape[1]))
+        l_center = np.argmax(conv_signal[l_min_index:l_max_index]) + l_min_index - offset
+        # Find the best right centroid by using past right center as a reference
+        r_min_index = int(max(r_center + offset - margin, 0))
+        r_max_index = int(min(r_center + offset + margin, warped.shape[1]))
+        r_center = np.argmax(conv_signal[r_min_index:r_max_index]) + r_min_index - offset
+        # Add what we found for that layer
+        window_centroids.append((l_center, r_center))
+
+    return window_centroids
+
+
+
+
+def find_line_peaks(img):
+    warped = img
+
+    window_width = 30
+    window_height = 50  # Break image into 9 vertical layers since image height is 720
+    margin = 50  # How much to slide left and right for searching
+
+    window_centroids = find_window_centroids(warped, window_width, window_height, margin)
+
+    # If we found any window centers
+    if len(window_centroids) > 0:
+
+        # Points used to draw all the left and right windows
+        l_points = np.zeros_like(warped)
+        r_points = np.zeros_like(warped)
+
+        # Go through each level and draw the windows
+        for level in range(0, len(window_centroids)):
+            # Window_mask is a function to draw window areas
+            l_mask = window_mask(window_width, window_height, warped, window_centroids[level][0], level)
+            r_mask = window_mask(window_width, window_height, warped, window_centroids[level][1], level)
+            # Add graphic points from window mask here to total pixels found
+            l_points[(l_points == 255) | ((l_mask == 1))] = 255
+            r_points[(r_points == 255) | ((r_mask == 1))] = 255
+
+        # Draw the results
+        #template = np.array(r_points + l_points, np.uint8)  # add both left and right window pixels together
+
+        zero_channel = np.zeros_like(l_points)  # create a zero color channle
+        right_line = np.array(cv2.merge((zero_channel, r_points, zero_channel)), np.uint8)  # make window pixels green
+        left_line = np.array(cv2.merge((l_points, zero_channel, zero_channel)), np.uint8)  # make window pixels green
+        warpage = np.array(cv2.merge((warped, warped, warped)),
+                           np.uint8)  # making the original road pixels 3 color channels
+        output = cv2.addWeighted(right_line, 1, left_line, 0.7, 120)  # overlay the orignal road image with window results
+
+    # If no window centers found, just display orginal road image
+    else:
+        output = np.array(cv2.merge((warped, warped, warped)), np.uint8)
+
+    # Display the final results
+    # plt.imshow(output)
+    # plt.title('window fitting results')
+    # plt.show()
+
+    return output
+
+
+def draw_lines(img, lines):
+    pass
+
+
+
+def image_preprocesor(img):
+    out = img
+    #1 Fix camera disortion
+    #out = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
+    #out = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    #out = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    #
+    out2 = s_treshording(img)
+    #out = mag_thresh(out, sobel_kernel=3, mag_thresh=(30, 100))
+    #out = dir_threshold(out, sobel_kernel=5, thresh=(0.5, 1.2))
+    #out = hls_magnitude(out)
+    out1 = mag_thresh(out, sobel_kernel=5, mag_thresh=(50, 100))
+    out = cv2.add(out1, out2)
+    out = dir_threshold(out, sobel_kernel=3, thresh=(0.7, 1.1))
+    # kernel = np.ones((2, 3), np.uint8)
+    #
+    # out = cv2.dilate(out, kernel, iterations=1)
+    # kernel = np.ones((3, 3), np.uint8)
+    # out = cv2.erode(out, kernel, iterations=3)
+    #
+    #out = cv2.erode(out, kernel, iterations=1)
+    #out = cv2.cvtColor(out, cv2.COLOR_HLS2RGB)
+    #out = cv2.cvtColor(out, cv2.COLOR_RGB2GRAY)
+    #ret, out = cv2.threshold(out, 0, 255, cv2.THRESH_OTSU)
+    #out = cv2.adaptiveThreshold(out, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, -15)
 
     return out
 
@@ -192,10 +361,13 @@ def image_preprocesor(img):
 #     exit()
 
 cap = cv2.VideoCapture('project_video.mp4')
+#cap = cv2.VideoCapture('harder_challenge_video.mp4')
+#cap = cv2.VideoCapture('challenge_video.mp4')
 
 while(cap.isOpened()):
 
-    ret, frame = cap.read()
+    ret, out = cap.read()
+    in_img = out
     if ret==True:
 
 
@@ -204,13 +376,17 @@ while(cap.isOpened()):
 
         #out = s_treshording(frame)
         # out = dir_threshold(img)
-        out = image_preprocesor(frame)
-        out =flat_perspective(out)
+
+        out = image_preprocesor(out)
+        cv2.imshow('frame', out)
+        out = flat_perspective(out)
+        out = find_line_peaks(out)
+        cv2.imshow('lines', out)
 
 
-        cv2.imshow('frame',out)
+        cv2.imshow('xxx',in_img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.imwrite("report/sample_pre.png", frame)
+            cv2.imwrite("report/sample_pre.png", in_img)
             cv2.imwrite("report/sample_out.png", out)
             break
     else:

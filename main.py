@@ -56,14 +56,32 @@ if REPORT:
 
 
 
+
+def crop_image(img):
+    x_crop = [250,1180]
+    y_crop = [440,665]
+    out = img[y_crop[0]:y_crop[1],x_crop[0]:x_crop[1]]
+    return out
+
+
+
 def flat_perspective(img):
     #points taken manualy in paint
-    img_size = (400, 800)
+    img_size = (600, 800)
     offset = {'x':80,'y':10}
-    p1 = [610,440]
-    p4 = [373,623]
-    p3 = [1000,623]
-    p2 = [680,444]
+    #p1 = [610,440]
+    '''Uncrop version '''
+    # p1 = [540,490]
+    # p4 = [373,623]
+    # p3 = [1000,623]
+    # p2 = [775,490]
+    #p2 = [680,444]
+    '''CROPPED'''
+    p1 = [310,35]
+    p4 = [75,205]
+    p3 = [750,205]
+    p2 = [490,35]
+    #p2 = [680,444]
 
 
     src = np.float32([p1,p2,p3,p4])
@@ -192,6 +210,14 @@ def mag_thresh(img, sobel_kernel=3, mag_thresh=(0, 255)):
 
     # Return the binary image
     return binary_output
+#report flatening images
+
+if REPORT:
+    img = cv2.imread('report/sample3.png')
+    crop = crop_image(img)
+    cv2.imwrite("report/crop_sample3.png", crop)
+
+
 
 #report flatening images
 if REPORT:
@@ -267,6 +293,7 @@ def find_window_centroids(image, window_width, window_height, margin):
         l_center = np.argmax(conv_signal[l_min_index:l_max_index]) + l_min_index - offset
         # Find the best right centroid by using past right center as a reference
         r_min_index = int(max(r_center + offset - margin, 0))
+
         r_max_index = int(min(r_center + offset + margin, warped.shape[1]))
         r_center = np.argmax(conv_signal[r_min_index:r_max_index]) + r_min_index - offset
         # Add what we found for that layer
@@ -280,16 +307,16 @@ def find_window_centroids(image, window_width, window_height, margin):
 def find_line_peaks(img):
     warped = img
 
-    window_width = 30
+    window_width = 50
     window_height = 50  # Break image into 9 vertical layers since image height is 720
-    margin = 50  # How much to slide left and right for searching
+    margin = 10  # How much to slide left and right for searching
 
     window_centroids = find_window_centroids(warped, window_width, window_height, margin)
 
     # If we found any window centers
     if len(window_centroids) > 0:
 
-        # Points used to draw all the left and right windows
+        # Points used to draw all the left and right windowsq
         l_points = np.zeros_like(warped)
         r_points = np.zeros_like(warped)
 
@@ -310,7 +337,7 @@ def find_line_peaks(img):
         left_line = np.array(cv2.merge((l_points, zero_channel, zero_channel)), np.uint8)  # make window pixels green
         warpage = np.array(cv2.merge((warped, warped, warped)),
                            np.uint8)  # making the original road pixels 3 color channels
-        output = cv2.addWeighted(right_line, 1, left_line, 0.7, 120)  # overlay the orignal road image with window results
+        output = cv2.addWeighted(right_line, 1, left_line, 1, 0)  # overlay the orignal road image with window results
 
     # If no window centers found, just display orginal road image
     else:
@@ -330,22 +357,25 @@ def draw_lines(img, lines):
 
 
 def image_preprocesor(img):
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     out = img
     #1 Fix camera disortion
     #out = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
     #out = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     #out = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #
+
     out2 = s_treshording(img)
+
     #out = mag_thresh(out, sobel_kernel=3, mag_thresh=(30, 100))
     #out = dir_threshold(out, sobel_kernel=5, thresh=(0.5, 1.2))
     #out = hls_magnitude(out)
     out1 = mag_thresh(out, sobel_kernel=5, mag_thresh=(50, 100))
     out = cv2.add(out1, out2)
-    out = dir_threshold(out, sobel_kernel=3, thresh=(0.7, 1.1))
-    # kernel = np.ones((2, 3), np.uint8)
+    #out = dir_threshold(out, sobel_kernel=3, thresh=(0.7, 1.1))
+    kernel = np.ones((3, 3), np.uint8)
     #
-    # out = cv2.dilate(out, kernel, iterations=1)
+    out = cv2.dilate(out, kernel, iterations=1)
     # kernel = np.ones((3, 3), np.uint8)
     # out = cv2.erode(out, kernel, iterations=3)
     #
@@ -354,6 +384,10 @@ def image_preprocesor(img):
     #out = cv2.cvtColor(out, cv2.COLOR_RGB2GRAY)
     #ret, out = cv2.threshold(out, 0, 255, cv2.THRESH_OTSU)
     #out = cv2.adaptiveThreshold(out, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 25, -15)
+    #out = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    out3 = clahe.apply(out)
+    out = out & out3
+    out = dir_threshold(out, sobel_kernel=5, thresh=(0.5, 1.2))
 
     return out
 
@@ -370,6 +404,8 @@ while(cap.isOpened()):
     in_img = out
     if ret==True:
 
+        crop = crop_image(out)
+        out = crop
 
         # write the flipped frame
         #out.write(frame)
@@ -378,10 +414,14 @@ while(cap.isOpened()):
         # out = dir_threshold(img)
 
         out = image_preprocesor(out)
-        cv2.imshow('frame', out)
+
+        cv2.imshow('frame2', crop)
         out = flat_perspective(out)
+        flat = out
+        cv2.imshow('frame', flat)
         out = find_line_peaks(out)
-        cv2.imshow('lines', out)
+        #out = cv2.addWeighted(out, 0.5, flat, 0.7,0)
+        cv2.imshow('lines', out )
 
 
         cv2.imshow('xxx',in_img)

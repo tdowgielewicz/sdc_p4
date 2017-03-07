@@ -299,7 +299,6 @@ def find_window_centroids(image, window_width, window_height, margin):
         # Add what we found for that layer
 
         window_centroids.append((l_center, r_center))
-    #print(window_centroids)
     return window_centroids
 
 

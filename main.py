@@ -312,7 +312,6 @@ def find_line_peaks(img):
     margin = 10  # How much to slide left and right for searching
 
     window_centroids = find_window_centroids(warped, window_width, window_height, margin)
-    #print(window_centroids)
 
     measure_curvate(img, window_centroids)
 

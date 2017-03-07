@@ -297,8 +297,9 @@ def find_window_centroids(image, window_width, window_height, margin):
         r_max_index = int(min(r_center + offset + margin, warped.shape[1]))
         r_center = np.argmax(conv_signal[r_min_index:r_max_index]) + r_min_index - offset
         # Add what we found for that layer
-        window_centroids.append((l_center, r_center))
 
+        window_centroids.append((l_center, r_center))
+    #print(window_centroids)
     return window_centroids
 
 
@@ -307,11 +308,14 @@ def find_window_centroids(image, window_width, window_height, margin):
 def find_line_peaks(img):
     warped = img
 
-    window_width = 50
+    window_width = 30
     window_height = 50  # Break image into 9 vertical layers since image height is 720
     margin = 10  # How much to slide left and right for searching
 
     window_centroids = find_window_centroids(warped, window_width, window_height, margin)
+    #print(window_centroids)
+
+    measure_curvate(img, window_centroids)
 
     # If we found any window centers
     if len(window_centroids) > 0:
@@ -320,19 +324,34 @@ def find_line_peaks(img):
         l_points = np.zeros_like(warped)
         r_points = np.zeros_like(warped)
 
+        offset_x = int(window_width/2)
+        offset_y = int(window_height/2)
+
         # Go through each level and draw the windows
         for level in range(0, len(window_centroids)):
             # Window_mask is a function to draw window areas
-            l_mask = window_mask(window_width, window_height, warped, window_centroids[level][0], level)
-            r_mask = window_mask(window_width, window_height, warped, window_centroids[level][1], level)
-            # Add graphic points from window mask here to total pixels found
-            l_points[(l_points == 255) | ((l_mask == 1))] = 255
-            r_points[(r_points == 255) | ((r_mask == 1))] = 255
+            h_pos = int(window_height*level - offset_y)
+
+
+            box_l = img[h_pos-offset_y:h_pos+offset_y,
+                    window_centroids[level][0]-offset_x:window_centroids[level][0]+offset_x]
+            box_r = img[h_pos - offset_y:h_pos + offset_y,
+                    window_centroids[level][1] - offset_x:window_centroids[level][1] + offset_x]
+
+            #skip points if no info
+            if ( box_l.mean() > 0 ):
+                l_mask = window_mask(window_width, window_height, warped, window_centroids[level][0], level)
+                l_points[(l_points == 255) | ((l_mask == 1))] = 255
+            if (box_r.mean() > 0):
+                r_mask = window_mask(window_width, window_height, warped, window_centroids[level][1], level)
+                r_points[(r_points == 255) | ((r_mask == 1))] = 255
+
+
 
         # Draw the results
         #template = np.array(r_points + l_points, np.uint8)  # add both left and right window pixels together
 
-        zero_channel = np.zeros_like(l_points)  # create a zero color channle
+        zero_channel = np.zeros_like(r_points)  # create a zero color channle
         right_line = np.array(cv2.merge((zero_channel, r_points, zero_channel)), np.uint8)  # make window pixels green
         left_line = np.array(cv2.merge((l_points, zero_channel, zero_channel)), np.uint8)  # make window pixels green
         warpage = np.array(cv2.merge((warped, warped, warped)),
@@ -351,8 +370,6 @@ def find_line_peaks(img):
     return output
 
 
-def draw_lines(img, lines):
-    pass
 
 
 
@@ -390,6 +407,12 @@ def image_preprocesor(img):
     out = dir_threshold(out, sobel_kernel=5, thresh=(0.5, 1.2))
 
     return out
+
+
+def measure_curvate(img, window_centroids):
+    pass
+
+
 
 # if True:
 #     exit()

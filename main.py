@@ -233,6 +233,8 @@ if REPORT:
     cv2.imwrite("report/s_thershold{}.png".format(id), out)
     out = h_treshording(img)
     cv2.imwrite("report/h_thershold{}.png".format(id), out)
+    plt.imshow(out)
+    plt.show()
 
 
     # images = glob.glob('report/sample*.png')
@@ -454,7 +456,7 @@ while(cap.isOpened()):
         break
 
 cap.release()
-cv2.destroyAllWindows()
+#cv2.destroyAllWindows()
 
 
 

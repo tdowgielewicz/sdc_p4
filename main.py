@@ -108,7 +108,7 @@ def s_treshording(img):
 
     hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     # H = hls[:, :, 0]
-    # L = hls[:, :, 1]
+    #  L = hls[:, :, 1]
     S = hls[:, :, 2]
 
     H = hls[:, :, 0]

@@ -37,8 +37,7 @@ def calibrate_camera():
     return camear_calibration
 
 
-
-def flat_perspective(img):
+def get_perspective_points():
     #points taken manualy in paint
     img_size = (600, 800)
     offset = {'x':80,'y':10}
@@ -61,6 +60,13 @@ def flat_perspective(img):
     dst = np.float32([[offset['x'], offset['x']], [img_size[0] - offset['x'], offset['y']],
                       [img_size[0] - offset['x'], img_size[1] - offset['y']],
                       [offset['x'], img_size[1] - offset['y']]])
+    return src,dst,img_size
+
+
+
+def flat_perspective(img):
+    src, dst, img_size = get_perspective_points()
+
     M = cv2.getPerspectiveTransform(src, dst)
     out = cv2.warpPerspective(img, M, img_size)
 
@@ -71,4 +77,4 @@ def flat_perspective(img):
     # ax2.imshow(out)
     # ax2.autoscale(False)
     # plt.show()
-    return out,M
+    return out,M,src,dst

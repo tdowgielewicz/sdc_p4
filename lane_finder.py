@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+from cam_calibration import get_perspective_points
+
 
 n_windows = 12
 slider_width = 150
@@ -83,15 +85,20 @@ def find_line(img):
 
         out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
         out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-        plt.imshow(out_img)
-        plt.plot(left_fitx, ploty, color='yellow')
-        plt.plot(right_fitx, ploty, color='yellow')
-        plt.xlim(0, image_heigth)
-        plt.ylim(image_width, 0)
+        # plt.imshow(out_img)
+        # plt.plot(left_fitx, ploty, color='yellow')
+        # plt.plot(right_fitx, ploty, color='yellow')
+        # plt.xlim(0, image_heigth)
+        # plt.ylim(image_width, 0)
     except:
         pass
     # plt.show()
     return out_img
+
+def mix_images(orginal,wraped):
+
+
+    pass
 
 
 

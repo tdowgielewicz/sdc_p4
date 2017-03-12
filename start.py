@@ -3,6 +3,7 @@ import glob
 import pickle
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 REPORT = True
@@ -29,7 +30,7 @@ cv2.imwrite("report/after_calibration_road.png", dst)
 image_path = 'report/sample1.png'
 img = cv2.imread(image_path)
 dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-flat, TransformMatrix = flat_perspective(dst)
+flat, TransformMatrix,ble,ple = flat_perspective(dst)
 
 
 ## Present Image Preprocesors
@@ -62,10 +63,24 @@ cv2.imwrite(image_path.replace('sample','pre_binary_sample'),pre)
 
 ##Finding Lines
 from lane_finder import find_line
-find_line(pre)
+lines = find_line(pre)
 
 
+#Get transformback matrix
+dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
+flat, TransformMatrix, src_points, dst_points = flat_perspective(dst)
 
+
+Minv = cv2.getPerspectiveTransform(  dst_points,src_points)
+
+warp_zero = np.zeros_like(pre).astype(np.uint8)
+color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+newwarp = cv2.warpPerspective(lines, Minv, (img.shape[1], img.shape[0]))
+
+result = cv2.addWeighted(img, 1, newwarp, 0.5, 0)
+
+plt.imshow(result)
+plt.show()
 
 OUTPUT_DIR = 'out_video'
 
@@ -73,7 +88,8 @@ images = sorted(glob.glob('frames/project_video/out-*.png'))
 for x in images:
     img = cv2.imread(x)
     dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-    flat, TransformMatrix = flat_perspective(dst)
+    flat, TransformMatrix,src_point,dst_points = flat_perspective(dst)
+
 
     out_b = s_binnary(flat)
     cv2.imwrite(image_path.replace('sample', 'b_binary_sample'), out_b)
@@ -82,6 +98,9 @@ for x in images:
 
     out = combine_preprocesors(flat)
     out = find_line(out)
+
+
+
     filename = x.replace('frames',OUTPUT_DIR)
     print(filename)
     # plt.imshow(out,cmap='gray')

@@ -4,7 +4,7 @@ import numpy as np
 
 def s_binnary(img):
     S_channel = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)[:,:,2]
-    threshold= [170,255]
+    threshold= [150,255]
 
     binary = np.zeros_like(S_channel)
     binary[(S_channel >= threshold[0]) & (S_channel <= threshold[1])] = 255
@@ -28,19 +28,17 @@ def white_binnary(img):
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #img = clahe.apply(img)
-    threshold= [245,255]
+    threshold= [225,255]
     #
     binary = np.zeros_like(img)
-    binary[(img >= threshold[0]) & (img <= threshold[1])] = 1
-
-
-
+    binary[(img >= threshold[0]) & (img <= threshold[1])] = 255
     return binary
+
 
 def combine_preprocesors(img):
     out1 = b_binnary(img)
     out2 = s_binnary(img)
     out3 = white_binnary(img)
-
+    #return out3
     return ( out1 & out2 ) | out3
 

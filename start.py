@@ -1,4 +1,5 @@
-from cam_calibration import calibrate_camera, flat_perspective
+
+import glob
 import pickle
 import cv2
 import matplotlib.pyplot as plt
@@ -8,6 +9,7 @@ REPORT = True
 CALIBRATE_CAMERA = False
 
 
+from cam_calibration import calibrate_camera, flat_perspective
 
 if CALIBRATE_CAMERA:
     camear_calibration = calibrate_camera()
@@ -36,14 +38,16 @@ from image_preprocessors import s_binnary
 
 out_s = s_binnary(flat)
 cv2.imwrite(image_path.replace('sample','s_binary_sample'),out_s)
+plt.imshow(out_s,cmap='gray')
+plt.show()
+
 
 # B channel from LAB color spaces
 from image_preprocessors import b_binnary
 out_b = b_binnary(flat)
 cv2.imwrite(image_path.replace('sample','b_binary_sample'),out_b)
 
-# plt.imshow(out_b,cmap='gray')
-# plt.show()
+
 
 # take white channel from gray color spaces
 from image_preprocessors import white_binnary
@@ -57,5 +61,28 @@ pre = combine_preprocesors(flat)
 cv2.imwrite(image_path.replace('sample','pre_binary_sample'),pre)
 
 
+
+
+OUTPUT_DIR = 'out_video'
+
+images = sorted(glob.glob('frames/project_video/out-*.png'))
+for x in images:
+    img = cv2.imread(x)
+    dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
+    flat, TransformMatrix = flat_perspective(dst)
+
+    out_b = s_binnary(flat)
+    cv2.imwrite(image_path.replace('sample', 'b_binary_sample'), out_b)
+
+
+
+    out = combine_preprocesors(flat)
+    filename = x.replace('frames',OUTPUT_DIR)
+    print(filename)
+    # plt.imshow(out,cmap='gray')
+    # plt.show()
+    # plt.imshow(out)
+    # plt.show()
+    cv2.imwrite(filename,out )
 
 

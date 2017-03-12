@@ -17,7 +17,8 @@ def s_treshording(img):
 #cap = skvideo.io.VideoCapture
 
 #So hardcore aproach to run movie without opencv ffmpeg build
-#  ffmpeg -i "challenge_video.mp4" "frames/out-%03d.jpg"
+#  ffmpeg -i "project_video.mp4" "frames/project_video/out-%04d.png"
+
 
 
 OUTPUT_DIR = 'out_video'
@@ -27,8 +28,9 @@ for x in images:
     img = cv2.imread(x)
     out = s_treshording(img)
 
-
-    cv2.imwrite(x.replace('frames',OUTPUT_DIR),out )
+    filename = x.replace('frames',OUTPUT_DIR).replace('jpg','png')
+    print(filename)
+    cv2.imwrite(filename,out )
 
 
 #than on the end compile images to video

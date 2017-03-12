@@ -96,9 +96,16 @@ def find_line(img):
     return out_img
 
 def mix_images(orginal,wraped):
+    src, dst, img_size = get_perspective_points()
+    Minv = cv2.getPerspectiveTransform(dst,src)
 
+    warp_zero = np.zeros_like(wraped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    newwarp = cv2.warpPerspective(wraped, Minv, (orginal.shape[1], orginal.shape[0]))
 
-    pass
+    result = cv2.addWeighted(orginal, 1, newwarp, 0.7, 0)
+
+    return result
 
 
 

@@ -30,7 +30,7 @@ cv2.imwrite("report/after_calibration_road.png", dst)
 image_path = 'report/sample1.png'
 img = cv2.imread(image_path)
 dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-flat, TransformMatrix,ble,ple = flat_perspective(dst)
+flat = flat_perspective(dst)
 
 
 ## Present Image Preprocesors
@@ -66,20 +66,12 @@ from lane_finder import find_line
 lines = find_line(pre)
 
 
-#Get transformback matrix
-dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-flat, TransformMatrix, src_points, dst_points = flat_perspective(dst)
+from lane_finder import mix_images
+
+mixed = mix_images(img,lines)
 
 
-Minv = cv2.getPerspectiveTransform(  dst_points,src_points)
-
-warp_zero = np.zeros_like(pre).astype(np.uint8)
-color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-newwarp = cv2.warpPerspective(lines, Minv, (img.shape[1], img.shape[0]))
-
-result = cv2.addWeighted(img, 1, newwarp, 0.5, 0)
-
-plt.imshow(result)
+plt.imshow(mixed)
 plt.show()
 
 OUTPUT_DIR = 'out_video'
@@ -88,7 +80,7 @@ images = sorted(glob.glob('frames/project_video/out-*.png'))
 for x in images:
     img = cv2.imread(x)
     dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-    flat, TransformMatrix,src_point,dst_points = flat_perspective(dst)
+    flat = flat_perspective(dst)
 
 
     out_b = s_binnary(flat)
@@ -98,6 +90,7 @@ for x in images:
 
     out = combine_preprocesors(flat)
     out = find_line(out)
+    out = mix_images(img,out)
 
 
 

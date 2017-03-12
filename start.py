@@ -26,7 +26,7 @@ cv2.imwrite("report/after_calibration_road.png", dst)
 
 
 #flatten perspective
-image_path = 'report/sample5.png'
+image_path = 'report/sample1.png'
 img = cv2.imread(image_path)
 dst = cv2.undistort(img, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
 flat, TransformMatrix = flat_perspective(dst)
@@ -38,8 +38,8 @@ from image_preprocessors import s_binnary
 
 out_s = s_binnary(flat)
 cv2.imwrite(image_path.replace('sample','s_binary_sample'),out_s)
-plt.imshow(out_s,cmap='gray')
-plt.show()
+# plt.imshow(out_s,cmap='gray')
+# plt.show()
 
 
 # B channel from LAB color spaces
@@ -60,6 +60,10 @@ from image_preprocessors import combine_preprocesors
 pre = combine_preprocesors(flat)
 cv2.imwrite(image_path.replace('sample','pre_binary_sample'),pre)
 
+##Finding Lines
+from lane_finder import find_line
+find_line(pre)
+
 
 
 
@@ -77,6 +81,7 @@ for x in images:
 
 
     out = combine_preprocesors(flat)
+    out = find_line(out)
     filename = x.replace('frames',OUTPUT_DIR)
     print(filename)
     # plt.imshow(out,cmap='gray')

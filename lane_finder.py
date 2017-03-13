@@ -8,7 +8,7 @@ from cam_calibration import get_perspective_points
 n_windows = 12
 slider_width = 150
 minpix = 20
-margin = 50
+margin = 100
 
 
 #havly inspired by lesson example
@@ -35,6 +35,15 @@ def find_line(img):
     leftx_base = np.argmax(histogram[:center])
     rightx_base = np.argmax(histogram[center:]) + center
 
+    lines_center = (rightx_base + leftx_base ) /2
+
+    CAMERA_CENTER_OFFSET = -100
+
+    xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+
+    lines_offset = (center - lines_center + CAMERA_CENTER_OFFSET) * xm_per_pix
+    #print(lines_offset)
+
     # Current positions to be updated for each window
     leftx_current = leftx_base
     rightx_current = rightx_base
@@ -48,8 +57,8 @@ def find_line(img):
         win_xright_low = rightx_current - margin
         win_xright_high = rightx_current + margin
 
-        cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,255,0), 2)
-        cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(0,255,0), 2)
+        cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,0,255), 4)
+        cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(255,0,0), 4)
 
         good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (
         nonzerox < win_xleft_high)).nonzero()[0]
@@ -75,6 +84,8 @@ def find_line(img):
     righty = nonzeroy[right_lane_inds]
 
     # Fit a second order polynomial to each
+    #
+    #print(lefty,leftx)
     try:
         left_fit = np.polyfit(lefty, leftx, 2)
         right_fit = np.polyfit(righty, rightx, 2)
@@ -90,10 +101,52 @@ def find_line(img):
         # plt.plot(right_fitx, ploty, color='yellow')
         # plt.xlim(0, image_heigth)
         # plt.ylim(image_width, 0)
-    except:
-        pass
-    # plt.show()
-    return out_img
+        # plt.show()
+
+
+        y_eval = np.max(ploty)
+        # left_curverad = ((1 + (2 * left_fit[0] * y_eval + left_fit[1]) ** 2) ** 1.5) / np.absolute(2 * left_fit[0])
+        # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
+        #print(left_curverad, right_curverad)
+
+        ym_per_pix = 30 / 720  # meters per pixel in y dimension
+        xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+
+        #Fit new polynomials to x,y in world space
+        left_fit_cr = np.polyfit(lefty * ym_per_pix, leftx * xm_per_pix, 2)
+        right_fit_cr = np.polyfit(righty * ym_per_pix, rightx * xm_per_pix, 2)
+        # Calculate the new radii of curvature
+        left_curverad = ((1 + (2 * left_fit_cr[0] * y_eval * ym_per_pix + left_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+            2 * left_fit_cr[0])
+        right_curverad = (
+                         (1 + (2 * right_fit_cr[0] * y_eval * ym_per_pix + right_fit_cr[1]) ** 2) ** 1.5) / np.absolute(
+            2 * right_fit_cr[0])
+        # Now our radius of curvature is in meters
+        # print(left_curverad, 'm', right_curverad, 'm')
+        # Recast the x and y points into usable format for cv2.fillPoly()
+        pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+        pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+        pts = np.hstack((pts_left, pts_right))
+
+        cv2.fillPoly(out_img, np.int_([pts]), (0, 255, 0))
+
+
+        return out_img, left_curverad, left_curverad, lines_offset
+
+    except Exception as e:
+        print("COULD NOT FIT CIRCLE, Using last one")
+        return out_img, -1, -1, 0
+
+
+
+    #plt.show()
+
+
+
+
+
+
+
 
 def mix_images(orginal,wraped):
     src, dst, img_size = get_perspective_points()
@@ -103,7 +156,9 @@ def mix_images(orginal,wraped):
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
     newwarp = cv2.warpPerspective(wraped, Minv, (orginal.shape[1], orginal.shape[0]))
 
-    result = cv2.addWeighted(orginal, 1, newwarp, 0.7, 0)
+    result = cv2.addWeighted( newwarp, 0.3,orginal, 1, 0.1)
+
+
 
     return result
 

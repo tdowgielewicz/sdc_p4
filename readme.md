@@ -31,7 +31,7 @@ The goals / steps of this project are the following:
 ---
 
 #### This file
- This file README.md includes all the rubric points. list can be found [here](https://review.udacity.com/#!/rubrics/571/view) Points
+ This file README.md includes all the rubric points. list can be found [here](https://review.udacity.com/#!/rubrics/571/view)
 
 #### Camera Calibration
 Before Calibration:
@@ -98,7 +98,7 @@ Perspective transform was working as expected by drawing the `src` and `dst` poi
     threshold= [150,255]
 
 
-
+<img src="https://github.com/muncz/sdc_p4/blob/master/report/s_binary_sample2.png" width="200">
 
 ##### B chaneel
     B_channel = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)[:,:,0]
@@ -118,10 +118,10 @@ Perspective transform was working as expected by drawing the `src` and `dst` poi
 ##### Logic summary
 
 My images is logic opperation of ( S_Channel * B_Channel )  + White
+The code for this step is contained in the function combine_preprocesors(img) in [Preprocessor module](image_preprocessors.py)
+
+
  <img src="https://github.com/muncz/sdc_p4/blob/master/report/pre_binary_sample2.png" width="200">
-The code for this step is contained in the function combine_preprocesors(img) in [Preprocessor module](image_preprocessor.py)
-
-
 
 
 ### Lines description
@@ -180,7 +180,7 @@ However after all this actions. Curvature was imho to big (should be around 1km 
 
 Get frame -> Remove Disortion -> Transform Perspective -> Image Preprocessors -> Find Lines -> Draw Lines ->  Retransform Perspective -> Mix with orginal frame -> Put some text about
 
-Here's a link to my [video](result.mp4) result in this repo repo
+Here's a link to my [video](result.mp4) result in this repo repo.
 However it can be also find on youtube: https://youtu.be/sPoX2raTDsw
 
 

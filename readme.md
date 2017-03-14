@@ -46,13 +46,21 @@ After Calibration:
 ##### Camera disortion correction
 
 
-The code for this step is contained in the function  calbrate_camera() in [cam_calibaration module](cam_calibaration.py)
+The code for this step is contained in the function  calbrate_camera() in [cam_calibaration module](cam_calibration.py)
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
 
-![alt text][image1]
+On road before calibration:
+
+<img src="https://github.com/muncz/sdc_p4/blob/master/report/before_calibration_road.png" width="400">
+
+On road after calibration:
+
+<img src="https://github.com/muncz/sdc_p4/blob/master/report/after_calibration_road.png" width="400">
+
+There is only slighty difference from before to after images. But this small diference can do a real job when measuring road curvature
 
 ###Pipeline (single images)
 

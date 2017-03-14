@@ -57,8 +57,8 @@ def find_line(img):
         win_xright_low = rightx_current - margin
         win_xright_high = rightx_current + margin
 
-        cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,0,255), 4)
-        cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(255,0,0), 4)
+        cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),(0,0,255), 1)
+        cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(255,0,0), 1)
 
         good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low) & (
         nonzerox < win_xleft_high)).nonzero()[0]
@@ -94,14 +94,16 @@ def find_line(img):
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
         right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
 
-        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-        # plt.imshow(out_img)
-        # plt.plot(left_fitx, ploty, color='yellow')
-        # plt.plot(right_fitx, ploty, color='yellow')
-        # plt.xlim(0, image_heigth)
-        # plt.ylim(image_width, 0)
-        # plt.show()
+        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [0, 255, 0]
+        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 255, 0]
+
+        plt.imshow(out_img)
+        plt.plot(left_fitx, ploty, color='yellow')
+        plt.plot(right_fitx, ploty, color='yellow')
+        plt.xlim(0, image_heigth)
+        plt.ylim(image_width, 0)
+        plt.show()
+        plt.savefig('report/lines.jpg')
 
 
         y_eval = np.max(ploty)
@@ -128,10 +130,10 @@ def find_line(img):
         pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
         pts = np.hstack((pts_left, pts_right))
 
-        cv2.fillPoly(out_img, np.int_([pts]), (0, 255, 0))
+        #cv2.fillPoly(out_img, np.int_([pts]), (0, 255, 0))
 
 
-        return out_img, left_curverad, left_curverad, lines_offset
+        return out_img, left_curverad, right_curverad, lines_offset
 
     except Exception as e:
         print("COULD NOT FIT CIRCLE, Using last one")

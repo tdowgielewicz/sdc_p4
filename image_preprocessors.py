@@ -27,7 +27,6 @@ clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 def white_binnary(img):
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    #img = clahe.apply(img)
     threshold= [225,255]
     #
     binary = np.zeros_like(img)

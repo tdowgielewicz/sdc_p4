@@ -53,7 +53,7 @@ cv2.imwrite(image_path.replace('sample','b_binary_sample'),out_b)
 # take white channel from gray color spaces
 from image_preprocessors import white_binnary
 out_w = white_binnary(flat)
-cv2.imwrite(image_path.replace('sample','b_binary_sample'),out_w)
+cv2.imwrite(image_path.replace('sample','w_binary_sample'),out_w)
 
 
 
@@ -64,6 +64,7 @@ cv2.imwrite(image_path.replace('sample','pre_binary_sample'),pre)
 ##Finding Lines
 from lane_finder import find_line
 lines,curv_l,corv_r,offcenter = find_line(pre)
+cv2.imwrite(image_path.replace('sample','lines_detected_sample'),lines)
 
 
 from lane_finder import mix_images

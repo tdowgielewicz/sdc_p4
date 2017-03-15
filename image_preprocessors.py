@@ -12,6 +12,8 @@ def s_binnary(img):
     return binary
 
 
+
+
 # https://hidefcolor.com/blog/color-management/what-is-lab-color-space/
 def b_binnary(img):
     B_channel = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)[:,:,0]

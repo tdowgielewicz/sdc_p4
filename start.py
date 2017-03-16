@@ -77,6 +77,7 @@ mixed = mix_images(img,lines)
 
 
 cap = cv2.VideoCapture('project_video.mp4')
+# cap = cv2.VideoCapture('part1.mp4')
 # cap = cv2.VideoCapture('harder_challenge_video.mp4')
 #cap = cv2.VideoCapture('challenge_video.mp4')
 
@@ -120,8 +121,9 @@ while(cap.isOpened()):
 
 
         out = combine_preprocesors(flat)
+        cv2.imshow('prep', out)
         out, curv_l, corv_r, offcenter = find_line(out)
-        #cv2.imshow('lines', out)
+        cv2.imshow('lines', out)
         out = mix_images(in_img,out)
 
         curves.append((curv_l, corv_r))

@@ -35,5 +35,5 @@ for x in images:
 
 #than on the end compile images to video
 # TODO: ADD automated scripts to make video
-# ffmpeg -r 24 -f image2  -i out-%03d.jpg -vcodec libx264 -crf 25  -pix_fmt yuv420p test.mp4
+# ffmpeg -r 24 -f image2  -i frame-%04d.jpg -vcodec libx264 -crf 25  -pix_fmt yuv420p test.mp4
 

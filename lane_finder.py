@@ -135,30 +135,42 @@ def find_line(img):
         pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
 
         global HISTORY_LEFT, HISTORY_RIGHT
-        print("pts",pts_left.sum(),pts_left.sum())
-        print("crv:", left_curverad,right_curverad)
+        # print("pts",pts_left.sum(),pts_left.sum())
+        # print("crv:", left_curverad,right_curverad)
 
         R = 0
         B = 0
         G = 255
 
+        #check if left and right curvature match
+        is_curvature_ok = True
+        if( right_curverad < left_curverad * 0.3 ) or ( right_curverad  > left_curverad * 2):
+            is_curvature_ok  = False
+            # R =  255
+            # G = 0
+
+        if (not is_curvature_ok):
+            pts_left = HISTORY_LEFT[-1]
+            pts_right = HISTORY_RIGHT[-1]
+
+
         if (pts_left.sum() < 315000 ):
-            pts_left = HISTORY_LEFT
-            R+= 200
-            G -=50
+            pts_left = HISTORY_LEFT[-1]
+            # R+= 200
+            # G -=50
         else:
-            HISTORY_LEFT= pts_left
+            HISTORY_LEFT.append(pts_left)
 
         if (pts_right.sum() < 315000 ):
-            pts_right = HISTORY_RIGHT
-            B += 200
-            G -= 50
+            pts_right = HISTORY_RIGHT[-1]
+            # B += 200
+            # G -= 50
         else:
-            HISTORY_RIGHT = pts_left
+            HISTORY_RIGHT.append(pts_right)
 
         pts = np.hstack((pts_left, pts_right))
 
-        cv2.fillPoly(out_img, np.int_([pts]), (R, 255, B))
+        cv2.fillPoly(out_img, np.int_([pts]), (R, G, B))
 
 
         return out_img, left_curverad, right_curverad, lines_offset
@@ -166,10 +178,15 @@ def find_line(img):
     except Exception as e:
         print("COULD NOT FIT CIRCLE, Using last one",e)
 
-        pts = np.hstack((HISTORY_LEFT, HISTORY_RIGHT))
-        cv2.fillPoly(out_img, np.int_([pts]), (0, 255, 255))
-
-
+        pts = np.hstack((HISTORY_LEFT[-2], HISTORY_RIGHT[-2]))
+        print("left:",HISTORY_LEFT[-2])
+        print("right:",HISTORY_RIGHT[-2])
+        # plt.imshow(out_img)
+        # plt.show()
+        cv2.fillPoly(out_img, np.int_([pts]), (0, 255, 0))
+        #
+        # plt.imshow(out_img)
+        # plt.show()
         return out_img, -1, -1, 0
 
 
@@ -189,8 +206,11 @@ def mix_images(orginal,wraped):
 
     warp_zero = np.zeros_like(wraped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-    newwarp = cv2.warpPerspective(wraped, Minv, (orginal.shape[1], orginal.shape[0]))
 
+    newwarp = cv2.warpPerspective(wraped, Minv, (orginal.shape[1], orginal.shape[0]))
+    # plt.imshow(orginal)
+    # plt.show()
+    # print(warp_zero.shape,orginal.shape)
     result = cv2.addWeighted( newwarp, 0.3,orginal, 1, 0.1)
 
 

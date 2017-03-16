@@ -188,6 +188,6 @@ Here's a link to my [video](result.mp4) result in this repo repo.
 ### Summary
 
 This pipe line works good on the simple videos with quite constant lighting conditions. However a lot of thing could be improved. A lot of adjustments still should be done to have 99.9999% robust system
-This pipleine for shure will fail in diferent light conditions it is adjusted to that only one video. Also finding the lines works good only on quite small Curvatures. Also processing power is the limit,
+This pipeline for sure will fail in different light conditions. It is adjusted to that only one video. Also finding the lines works good only on quite small Curvatures. And processing power is the limit,
 I have quite buffy PC and i was not able to process image in real time. However there may some solutions like using GPU, switch to C++ and limit ROIs with preprocessing
 Nevertheless it is possible to make more robust system based on this one.

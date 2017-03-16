@@ -181,8 +181,6 @@ However after all this actions. Curvature was imho to big (should be around 1km 
 Get frame -> Remove Disortion -> Transform Perspective -> Image Preprocessors -> Find Lines -> Draw Lines ->  Retransform Perspective -> Mix with orginal frame -> Put some text about
 
 Here's a link to my [video](result.mp4) result in this repo repo.
-However it can be also find on youtube: https://youtu.be/sPoX2raTDsw
-
 
 
 ---

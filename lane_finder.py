@@ -114,8 +114,8 @@ def find_line(img):
         # right_curverad = ((1 + (2 * right_fit[0] * y_eval + right_fit[1]) ** 2) ** 1.5) / np.absolute(2 * right_fit[0])
         #print(left_curverad, right_curverad)
 
-        ym_per_pix = 30 / 720  # meters per pixel in y dimension
-        xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+        ym_per_pix = 40 / 800  # meters per pixel in y dimension
+        xm_per_pix = 4 / 400  # meters per pixel in x dimension
 
         #Fit new polynomials to x,y in world space
         left_fit_cr = np.polyfit(lefty * ym_per_pix, leftx * xm_per_pix, 2)

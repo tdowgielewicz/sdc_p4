@@ -90,8 +90,8 @@ mean_curves_count = 10
 def count_mean_curve(curves):
     sum = 0
     for l,r in curves:
-        sum = sum + (l+2*r)
-    return  (sum/(len(curves)*2)) *0.7
+        sum = sum + (l+r)
+    return  (sum/(len(curves)*2))
 
 
 

@@ -167,8 +167,8 @@ Already having the points of the circle we can try to fit it in to radius of cur
 
 Please notice variables ym_per_pix and xm_per_pix which scales pixels world to real S.I. values world
 
-        ym_per_pix = 30 / 720  # meters per pixel in y dimension
-        xm_per_pix = 3.7 / 700  # meters per pixel in x dimension
+        ym_per_pix = 40 / 800  # meters per pixel in y dimension
+        xm_per_pix = 4 / 400  # meters per pixel in x dimension
 
 
 However after all this actions. Curvature was imho to big (should be around 1km on the most part of the track, so at the very end it was manualy adjusted by multiplying by factor - 0.7

@@ -93,6 +93,12 @@ def find_line(img):
         left_fit = np.polyfit(lefty, leftx, 2)
         right_fit = np.polyfit(righty, rightx, 2)
 
+
+        if left_fit[0] <0 :
+            isLeft = -1
+        else:
+            isLeft = 1
+
         ploty = np.linspace(0, img.shape[0] - 1, img.shape[0])
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
         right_fitx = right_fit[0] * ploty ** 2 + right_fit[1] * ploty + right_fit[2]
@@ -173,7 +179,7 @@ def find_line(img):
         cv2.fillPoly(out_img, np.int_([pts]), (R, G, B))
 
 
-        return out_img, left_curverad, right_curverad, lines_offset
+        return out_img, left_curverad, right_curverad, lines_offset, isLeft
 
     except Exception as e:
         print("COULD NOT FIT CIRCLE, Using last one",e)
@@ -187,7 +193,7 @@ def find_line(img):
         #
         # plt.imshow(out_img)
         # plt.show()
-        return out_img, -1, -1, 0
+        return out_img, -1, -1, 0, False
 
 
 

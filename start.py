@@ -63,7 +63,7 @@ cv2.imwrite(image_path.replace('sample','pre_binary_sample'),pre)
 
 ##Finding Lines
 from lane_finder import find_line
-lines,curv_l,corv_r,offcenter = find_line(pre)
+lines,curv_l,corv_r,offcenter,isLeft = find_line(pre)
 cv2.imwrite(image_path.replace('sample','lines_detected_sample'),lines)
 
 
@@ -101,6 +101,32 @@ fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
 video = cv2.VideoWriter('001_output.avi',fourcc, 29.0, size)  # 'False' for 1-ch instead of 3-ch for color
 
 
+import serial
+
+
+COMportNumber = 'COM4'
+COMportBaudrate = 250000
+COMportBytesize = serial.EIGHTBITS
+COMportParity = serial.PARITY_NONE
+COMportStopbits = serial.STOPBITS_ONE
+COMportTimeout = 0.05
+
+
+
+serial_handler = serial.Serial(COMportNumber, baudrate=COMportBaudrate, bytesize=COMportBytesize,
+                               parity=COMportParity, stopbits=COMportStopbits, timeout=COMportTimeout)
+def MoveTo(angle):
+
+    pos = int(angle) + 127
+    if pos < 0:
+        pos = 0
+    if pos > 255:
+        pos = 255
+
+    serial_handler.write(serial.to_bytes([pos]))
+    print(serial_handler.readlines(),pos)
+
+
 frame_id = 0
 while(cap.isOpened()):
 
@@ -122,7 +148,7 @@ while(cap.isOpened()):
 
         out = combine_preprocesors(flat)
         cv2.imshow('prep', out)
-        out, curv_l, corv_r, offcenter = find_line(out)
+        out, curv_l, corv_r, offcenter,isLeft = find_line(out)
         cv2.imshow('lines', out)
         out = mix_images(in_img,out)
 
@@ -131,9 +157,9 @@ while(cap.isOpened()):
         curva = (count_mean_curve(curves))
         cv2.putText(out, "Road curvature: {:.2} km".format(curva/1000), (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        sterring_angle = 1000000 / (curva ** 2) * 45
+        sterring_angle = 1000000 / (curva ** 2) * 45 * isLeft
         cv2.putText(out, "Steering wheel {:02.2f} deg".format(sterring_angle), (30, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
+        MoveTo(sterring_angle)
 
         cv2.putText(out, "Off center {:0.2f} m".format(offcenter), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 

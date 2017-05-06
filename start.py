@@ -76,7 +76,7 @@ mixed = mix_images(img,lines)
 # plt.show()
 
 
-cap = cv2.VideoCapture('project_video.mp4')
+
 # cap = cv2.VideoCapture('part1.mp4')
 # cap = cv2.VideoCapture('harder_challenge_video.mp4')
 #cap = cv2.VideoCapture('challenge_video.mp4')
@@ -96,9 +96,7 @@ def count_mean_curve(curves):
 
 
 
-size = (img.shape[1],img.shape[0])
-fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
-video = cv2.VideoWriter('001_output.avi',fourcc, 29.0, size)  # 'False' for 1-ch instead of 3-ch for color
+
 
 
 import serial
@@ -117,69 +115,83 @@ serial_handler = serial.Serial(COMportNumber, baudrate=COMportBaudrate, bytesize
                                parity=COMportParity, stopbits=COMportStopbits, timeout=COMportTimeout)
 def MoveTo(angle):
 
+    if angle > 0:
+        angle = angle * 2
     pos = int(angle) + 127
-    if pos < 0:
-        pos = 0
-    if pos > 255:
-        pos = 255
+
+
 
     serial_handler.write(serial.to_bytes([pos]))
-    print(serial_handler.readlines(),pos)
+    #print(serial_handler.readlines(),pos,angle)
 
+step_angles = []
 
 frame_id = 0
-while(cap.isOpened()):
+while True:
+
+    size = (img.shape[1], img.shape[0])
+    #fourcc = cv2.VideoWriter_fourcc(*'DIVX')  # 'x264' doesn't work
+    #video = cv2.VideoWriter('001_output.avi', fourcc, 29.0, size)  # 'False' for 1-ch instead of 3-ch for color
+    cap = cv2.VideoCapture('project_video.mp4')
+
+    while(cap.isOpened()):
 
 
-    ret, out = cap.read()
-    in_img = out
-    if ret==True:
-
-
-
-        dst = cv2.undistort(out, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
-        flat = flat_perspective(dst)
-
-
-        out_b = s_binnary(flat)
-        cv2.imwrite(image_path.replace('sample', 'b_binary_sample'), out_b)
+        ret, out = cap.read()
+        in_img = out
+        if ret==True:
 
 
 
-        out = combine_preprocesors(flat)
-        cv2.imshow('prep', out)
-        out, curv_l, corv_r, offcenter,isLeft = find_line(out)
-        cv2.imshow('lines', out)
-        out = mix_images(in_img,out)
+            dst = cv2.undistort(out, camear_calibration['mtx'], camear_calibration['dist'], None, camear_calibration['mtx'])
+            flat = flat_perspective(dst)
 
-        curves.append((curv_l, corv_r))
 
-        curva = (count_mean_curve(curves))
-        cv2.putText(out, "Road curvature: {:.2} km".format(curva/1000), (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            out_b = s_binnary(flat)
+            cv2.imwrite(image_path.replace('sample', 'b_binary_sample'), out_b)
 
-        sterring_angle = 1000000 / (curva ** 2) * 45 * isLeft
-        cv2.putText(out, "Steering wheel {:02.2f} deg".format(sterring_angle), (30, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-        MoveTo(sterring_angle)
 
-        cv2.putText(out, "Off center {:0.2f} m".format(offcenter), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-        cv2.imshow('result', out )
-        if(len(curves) > mean_curves_count ):
-            curves.popleft()
+            out = combine_preprocesors(flat)
+            cv2.imshow('prep', out)
+            out, curv_l, corv_r, offcenter,isLeft = find_line(out)
+            cv2.imshow('lines', out)
+            out = mix_images(in_img,out)
 
-        filename = ("out_video/project_video/frame-{:04d}.png".format(frame_id))
-        cv2.imwrite(filename,out)
-        frame_id += 1
+            curves.append((curv_l, corv_r))
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.imwrite("report/sample_pre.png", in_img)
-            cv2.imwrite("report/sample_out.png", out)
+            curva = (count_mean_curve(curves))
+            cv2.putText(out, "Road curvature: {:.2} km".format(curva/1000), (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+            sterring_angle = 1000000 / (curva ** 2) * 45 * isLeft
+            cv2.putText(out, "Steering wheel {:02.2f} deg".format(sterring_angle), (30, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+            """Serial Control"""
+            step_angles.append(sterring_angle)
+            if frame_id % 3 == 0:
+                ang = sum(step_angles)/float(len(step_angles))
+                print(ang,",")
+                MoveTo(ang)
+                step_angles = []
+
+            cv2.putText(out, "Off center {:0.2f} m".format(offcenter), (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+
+            cv2.imshow('result', out )
+            if(len(curves) > mean_curves_count ):
+                curves.popleft()
+
+            #filename = ("out_video/project_video/frame-{:04d}.png".format(frame_id))
+            #cv2.imwrite(filename,out)
+            frame_id += 1
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                cv2.imwrite("report/sample_pre.png", in_img)
+                cv2.imwrite("report/sample_out.png", out)
+                break
+        else:
             break
-    else:
-        break
 
-cap.release()
-video.release()
+    cap.release()
 #cv2.destroyAllWindows()
 
 

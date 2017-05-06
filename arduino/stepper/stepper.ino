@@ -21,7 +21,7 @@ void setup() {
 
 
     stepper.setMaxSpeed(2000.0);
-    stepper.setAcceleration(4500.0);
+    stepper.setAcceleration(2200.0);
     stepper.setSpeed(3000);
     stepper.moveTo(2);
     
@@ -36,7 +36,7 @@ void loop() {
     inByte -= 127;
     long absPos = inByte * 10;
    
-    Serial.println(absPos, DEC);
+    //Serial.println(absPos, DEC);
 
     stepper.moveTo(absPos);
    }
